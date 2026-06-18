@@ -46,6 +46,9 @@ jobs:
     needs: build-and-push
     runs-on: self-hosted
     steps:
+      - name: Checkout code (sync latest config files)
+        uses: actions/checkout@v4
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -55,6 +58,15 @@ jobs:
 
       - name: Pull latest image
         run: docker pull ghcr.io/${{ github.repository }}:latest
+
+      - name: Sync config files to deploy directory
+        run: |
+          echo "[$(date)] Syncing config files..."
+          # 确保 /opt/new-api 目录存在
+          mkdir -p /opt/new-api/data /opt/new-api/logs
+          # 从仓库 checkout 中同步最新配置文件
+          cp -f docker-compose.yml /opt/new-api/docker-compose.yml
+          echo "[$(date)] Config files synced!"
 
       - name: Deploy with docker compose
         run: |
